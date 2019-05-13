@@ -501,9 +501,24 @@ void KateProjectPluginView::slotProjectIndex()
         return;
     }
 
+    // HACK: later proper register the stuff on open
     m_plugin->lspClientManager().documentOpened(kv->document());
 
-    m_plugin->lspClientManager().findLinkAt(kv->document(), kv->cursorPosition(), [](const Utils::Link &) {});
+    // request goto definition target
+    m_plugin->lspClientManager().findLinkAt(kv->document(), kv->cursorPosition(), [this](const Utils::Link &link) {
+        /**
+         * create view
+         */
+        KTextEditor::View *view = mainWindow()->openUrl(QUrl::fromLocalFile(link.targetFileName));
+        if (!view) {
+            return;
+        }
+
+        /**
+         * set cursor, if possible
+         */
+        view->setCursorPosition(KTextEditor::Cursor(link.targetLine, link.targetColumn));
+    });
 #if 0
     if (!m_toolView) {
         return;
